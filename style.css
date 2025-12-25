@@ -1,0 +1,173 @@
+* {margin:0; padding:0; box-sizing:border-box;}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background: radial-gradient(circle at top, #1b1f2b, #0b0e14);
+    min-height: 100vh;
+    color: #e6e8ee;
+}
+
+header h1 {
+    text-align: center;
+    font-size: 36px;
+    font-weight: 700;
+    color: #e6e8ee;
+    margin: 25px 0;
+}
+
+.hero {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.card {
+    background: rgba(21, 25, 35, 0.95);
+    padding: 40px 50px;
+    border-radius: 22px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+    max-width: 900px;
+    width: 100%;
+}
+
+/* Napis "Kategoria I-XIII" nad nazwą */
+#category-number {
+    font-size: 22px;
+    color: #7fd1ff; /* kolor pasujący do tła */
+    margin-bottom: 8px;
+}
+
+/* Nazwa kategorii */
+#category-title {
+    font-size: 28px;
+    color: #9aa2ff;
+    margin-bottom: 20px;
+}
+
+.progress-container {
+    width: 100%;
+    background-color: #2a2e3a;
+    border-radius: 10px;
+    height: 12px;
+    margin-bottom: 15px;
+}
+
+#progress-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(135deg, #6a85ff, #7fd1ff);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.gallery {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+.photo {
+    background-color: #0e1117;
+    border-radius: 16px;
+    overflow: hidden;
+    padding: 12px;
+    border: 2px solid transparent;
+    transition: transform 0.2s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.photo img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-bottom: 10px;
+}
+
+.photo.selected {
+    border-color: #6a85ff;
+    box-shadow: 0 0 15px #6a85ff, 0 0 30px #7fd1ff, 0 0 45px #6a85ff;
+    transform: translateY(-4px);
+}
+
+.name {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 8px 0 10px;
+    color: #e6e8ee;
+}
+
+.photo button {
+    width: 100%;
+    padding: 8px 0;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #6a85ff, #7fd1ff);
+    color: #0b0e14;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.photo button:hover:not(:disabled) {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+#next-round-btn {
+    margin-top: 10px;
+    padding: 10px 20px;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #6a85ff, #7fd1ff);
+    color: #0b0e14;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+#next-round-btn:hover:not(:disabled) {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+@media (max-width:900px){.gallery{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:500px){.gallery{grid-template-columns:1fr;}}
+
+#alert-modal {
+    display: none;
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.7);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.alert-content {
+    background: #1b1f2b;
+    padding: 25px 40px;
+    border-radius: 20px;
+    text-align: center;
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 0 20px #6a85ff;
+}
+
+.alert-content button {
+    margin-top: 15px;
+    padding: 8px 18px;
+    border-radius: 10px;
+    border: none;
+    background: #6a85ff;
+    color: #0b0e14;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.alert-content button:hover {
+    background: #7fd1ff;
+}
