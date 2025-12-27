@@ -1,15 +1,6 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plebiscyt - Głosowanie</title>
-    <link rel="stylesheet" href="style.css"> <style>
-        .kategoria { margin-bottom: 30px; border: 1px solid #ccc; padding: 15px; border-radius: 8px; }
-        .opcja { display: flex; align-items: center; justify-content: space-between; margin: 10px 0; }
-        .vote-btn { cursor: pointer; padding: 5px 15px; background: #28a745; color: white; border: none; border-radius: 4px; }
-        .vote-btn:hover { background: #218838; }
-    </style>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hall Of Fame - Głosowanie</title>
@@ -40,19 +31,6 @@ header .subtitle{font-size:18px;color:#7fd1ff;margin-top:5px;}
 </head>
 <body>
 
-    <h1>Wybierz swoich faworytów</h1>
-
-    <div class="kategoria">
-        <h2>Najlepszy Streamer</h2>
-        <div class="opcja">
-            <span>Xayoo</span>
-            <button class="vote-btn" data-category="Streamer" data-name="Xayoo">Wybierz</button>
-        </div>
-        <div class="opcja">
-            <span>Young Multi</span>
-            <button class="vote-btn" data-category="Streamer" data-name="Young Multi">Wybierz</button>
-        </div>
-    </div>
 <header>
 <h1>Hall Of Fame: Jezioro</h1>
 <p class="subtitle">Wybierz najlepszego w każdej kategorii</p>
@@ -76,16 +54,6 @@ header .subtitle{font-size:18px;color:#7fd1ff;margin-top:5px;}
 
 <button id="next-round-btn" onclick="nextRound()">Dalej</button>
 
-    <div class="kategoria">
-        <h2>Drama Roku</h2>
-        <div class="opcja">
-            <span>Pandora Gate</span>
-            <button class="vote-btn" data-category="Drama" data-name="Pandora Gate">Wybierz</button>
-        </div>
-        <div class="opcja">
-            <span>Inna Drama</span>
-            <button class="vote-btn" data-category="Drama" data-name="Inna Drama">Wybierz</button>
-        </div>
 <div id="alert-modal">
     <div class="alert-content">
         <p>Proszę wybrać osobę przed przejściem dalej!</p>
@@ -93,27 +61,6 @@ header .subtitle{font-size:18px;color:#7fd1ff;margin-top:5px;}
     </div>
 </div>
 
-    <br>
-    <a href="wyniki.html" style="font-weight: bold; font-size: 1.2em;">ZOBACZ WYNIKI (TOP 1)</a>
-
-    <script>
-        // Logika wysyłania głosów
-        document.querySelectorAll('.vote-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const category = btn.getAttribute('data-category');
-                const name = btn.getAttribute('data-name');
-
-                // Pobierz stare głosy
-                let votes = JSON.parse(localStorage.getItem('plebiscyt_data')) || [];
-                
-                // Dodaj nowy
-                votes.push({ category, name });
-                
-                // Zapisz
-                localStorage.setItem('plebiscyt_data', JSON.stringify(votes));
-
-                alert(`Zagłosowano na: ${name}!`);
-            });
 </div>
 </div>
 
@@ -153,7 +100,6 @@ function toggleSelect(button){
             p.classList.remove('selected');
             p.querySelector('button').innerText="Wybierz";
         });
-    </script>
         // Zaznacz ten
         photo.classList.add('selected');
         button.innerText="Wybrano";
