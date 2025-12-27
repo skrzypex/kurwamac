@@ -31,7 +31,7 @@ header .subtitle{font-size:18px;color:#7fd1ff;margin-top:5px;}
 </head>
 <body>
 
-<header>
+<header id="main-header">
 <h1>Hall Of Fame: Jezioro</h1>
 <p class="subtitle">Wybierz najlepszego w każdej kategorii</p>
 </header>
@@ -134,10 +134,27 @@ function nextRound(){
 
     // Sprawdzenie końca gry
     if(currentRound >= maxRounds){
+        // Ukrywamy górny nagłówek, żeby się nie dublował
+        document.getElementById('main-header').style.display = 'none';
+
+        // Wyświetlamy ekran końcowy w karcie
         document.querySelector('.card').innerHTML = `
-            <h2 style="color:#7fd1ff; margin-bottom: 20px;">Dziękujemy za głosy!</h2>
-            <p style="color:#e6e8ee; margin-bottom: 20px;">Twoje wybory zostały zapisane.</p>
-            <a href="wyniki.html" style="padding:10px 20px; background:#9aa2ff; color:#fff; text-decoration:none; border-radius:12px; font-weight:bold;">ZOBACZ WYNIKI</a>
+            <div style="padding: 40px 10px;">
+                <h1 style="font-size:42px; font-weight:700; color:#9aa2ff; margin-bottom: 20px;">Hall Of Fame: Jezioro</h1>
+                <p style="font-size:24px; color:#7fd1ff; margin-bottom: 40px;">Dziękujemy za głosowanie, wyniki już wkrótce!</p>
+                
+                <a href="wyniki.html" style="
+                    display: inline-block;
+                    padding:15px 30px; 
+                    background:#9aa2ff; 
+                    color:#fff; 
+                    text-decoration:none; 
+                    border-radius:15px; 
+                    font-weight:bold;
+                    font-size: 18px;
+                    box-shadow: 0 0 15px rgba(154, 162, 255, 0.4);
+                ">ZOBACZ SWOJE WYNIKI</a>
+            </div>
         `;
         return;
     }
