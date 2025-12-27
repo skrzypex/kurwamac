@@ -1,70 +1,131 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plebiscyt - Wyniki TOP 1</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .result-card { background: #f4f4f4; padding: 20px; margin-top: 20px; border-left: 5px solid #007bff; }
-        .winner-name { font-size: 1.5em; color: #007bff; font-weight: bold; }
-        .vote-count { color: #666; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hall Of Fame - Wyniki</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* {margin:0; padding:0; box-sizing:border-box;}
+body {
+    font-family: 'Montserrat', sans-serif;
+    background: radial-gradient(circle at top, #1b1f2b, #0b0e14);
+    color: #e6e8ee;
+    min-height: 100vh;
+}
+header {text-align: center; margin: 30px 0 20px;}
+header h1 {font-size: 36px; font-weight: 700; color: #9aa2ff;}
+header .subtitle {font-size: 18px; color: #7fd1ff; margin-top: 5px;}
+.results-hero {display: flex; flex-direction: column; align-items: center; padding: 20px;}
+.results-grid {display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 1000px;}
+.result-card {background: rgba(21,25,35,0.95); padding: 20px; border-radius: 18px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.4); transition: transform 0.2s ease, box-shadow 0.2s ease;}
+.result-card:hover {transform: translateY(-3px); box-shadow: 0 15px 35px rgba(0,0,0,0.6);}
+.result-card h3 {font-size: 16px; color: #7fd1ff; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;}
+.result-card h4 {font-size: 20px; color: #fff; margin-bottom: 15px; font-weight: 600;}
+.result-card .winner {font-size: 24px; color: #9aa2ff; font-weight: 700; padding: 10px; border: 1px dashed #9aa2ff; border-radius: 10px; display: inline-block;}
+.result-center {margin-top: 40px; display: flex; justify-content: center; width: 100%; max-width: 1000px;}
+.reset-btn {margin-top: 50px; background: transparent; border: 1px solid #ff4d4d; color: #ff4d4d; padding: 10px 20px; border-radius: 8px; cursor: pointer;}
+
+@media (max-width:900px){.results-grid{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:600px){.results-grid{grid-template-columns:1fr;}}
+</style>
 </head>
 <body>
 
-    <h1>Wyniki Plebiscytu (Top 1)</h1>
-    <div id="results-container">Ładowanie wyników...</div>
+<header>
+    <h1>Hall Of Fame: Jezioro</h1>
+    <p class="subtitle">Wyniki głosowania (TOP 1)</p>
+</header>
 
-    <br>
-    <a href="index.html">Wróć do głosowania</a>
-    <button onclick="clearVotes()" style="margin-left: 20px; color: red;">Resetuj moje głosy</button>
+<main class="results-hero">
+    <div class="results-grid" id="results-grid"></div>
+    <div class="result-center" id="result-center"></div>
+    
+    <button class="reset-btn" onclick="resetGlosow()">Resetuj Głosy</button>
+</main>
 
-    <script>
-        function renderResults() {
-            const votes = JSON.parse(localStorage.getItem('plebiscyt_data')) || [];
-            const container = document.getElementById('results-container');
+<script>
+// Lista kategorii z opisami
+const categories = [
+    {id: 1, title: "Kategoria I", sub: "Największy Brutal"},
+    {id: 2, title: "Kategoria II", sub: "Cichy Brutal"},
+    {id: 3, title: "Kategoria III", sub: "Największy Simp"},
+    {id: 4, title: "Kategoria IV", sub: "Największy Najebus"},
+    {id: 5, title: "Kategoria V", sub: "Największy Ćpun"},
+    {id: 6, title: "Kategoria VI", sub: "Największy Troll"},
+    {id: 7, title: "Kategoria VII", sub: "Największy Tyracz"},
+    {id: 8, title: "Kategoria VIII", sub: "Największa Pizda"},
+    {id: 9, title: "Kategoria IX", sub: "Największy Rajzownik"},
+    {id: 10, title: "Kategoria X", sub: "Największy Wyjebus"},
+    {id: 11, title: "Kategoria XI", sub: "Kto Najwięcej Wychodził"},
+    {id: 12, title: "Kategoria XII", sub: "Największy Żul"},
+    {id: 13, title: "Kategoria XIII", sub: "Największy Żyd"}
+];
 
-            if (votes.length === 0) {
-                container.innerHTML = "<p>Brak oddanych głosów. Musisz najpierw zagłosować!</p>";
-                return;
-            }
+function loadResults(){
+    // Pobierz głosy z LocalStorage
+    const allVotes = JSON.parse(localStorage.getItem('jezioro_votes')) || [];
+    
+    const gridContainer = document.getElementById('results-grid');
+    const centerContainer = document.getElementById('result-center');
 
-            // 1. Grupuj głosy: { "Kategoria": { "Osoba": liczba_glosow } }
-            const stats = {};
-            votes.forEach(v => {
-                if (!stats[v.category]) stats[v.category] = {};
-                stats[v.category][v.name] = (stats[v.category][v.name] || 0) + 1;
-            });
+    // Funkcja licząca zwycięzcę dla danego ID kategorii
+    function getWinner(roundId) {
+        // Filtrujemy głosy tylko dla tej rundy
+        const votesInRound = allVotes.filter(v => v.roundIndex === roundId);
+        
+        if(votesInRound.length === 0) return "Brak głosów";
 
-            // 2. Wygeneruj HTML dla Top 1
-            let finalHtml = "";
-            for (const cat in stats) {
-                const nominees = stats[cat];
-                // Znajdź zwycięzcę kategorii
-                const winner = Object.keys(nominees).reduce((a, b) => nominees[a] > nominees[b] ? a : b);
-                
-                finalHtml += `
-                    <div class="result-card">
-                        <h3>Kategoria: ${cat}</h3>
-                        <p>Obecny lider:</p>
-                        <div class="winner-name">${winner}</div>
-                        <div class="vote-count">Liczba głosów: ${nominees[winner]}</div>
-                    </div>
-                `;
-            }
-            container.innerHTML = finalHtml;
-        }
+        // Zliczamy wystąpienia
+        const counts = {};
+        votesInRound.forEach(v => {
+            counts[v.choice] = (counts[v.choice] || 0) + 1;
+        });
 
-        function clearVotes() {
-            if(confirm("Czy na pewno chcesz usunąć swoje głosy?")) {
-                localStorage.removeItem('plebiscyt_data');
-                location.reload();
-            }
-        }
+        // Znajdujemy max
+        return Object.keys(counts).reduce((a, b) => counts[a] >= counts[b] ? a : b);
+    }
 
-        // Uruchom przy starcie
-        renderResults();
-    </script>
+    // Generowanie kart dla kategorii 1-12
+    for(let i=0; i<12; i++){
+        const cat = categories[i];
+        const winner = getWinner(cat.id);
+        
+        const card = document.createElement('div');
+        card.className = "result-card";
+        card.innerHTML = `
+            <h3>${cat.title}</h3>
+            <h4>${cat.sub}</h4>
+            <div class="winner">${winner}</div>
+        `;
+        gridContainer.appendChild(card);
+    }
+
+    // Generowanie karty dla kategorii 13 (Center)
+    const cat13 = categories[12];
+    const winner13 = getWinner(cat13.id);
+    
+    const card13 = document.createElement('div');
+    card13.className = "result-card";
+    // Dodatkowe style dla ostatniej karty żeby była wyróżniona
+    card13.style.width = "100%"; 
+    card13.innerHTML = `
+        <h3>${cat13.title}</h3>
+        <h4>${cat13.sub}</h4>
+        <div class="winner">${winner13}</div>
+    `;
+    centerContainer.appendChild(card13);
+}
+
+function resetGlosow() {
+    if(confirm("Czy na pewno chcesz usunąć wszystkie głosy?")) {
+        localStorage.removeItem('jezioro_votes');
+        location.reload();
+    }
+}
+
+// Uruchom
+loadResults();
+</script>
 </body>
 </html>
