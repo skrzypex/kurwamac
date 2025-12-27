@@ -2,11 +2,10 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Hall Of Fame - Wyniki</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-/* Style te same co w index.html */
 * {margin:0; padding:0; box-sizing:border-box;}
 body {
     font-family: 'Montserrat', sans-serif;
@@ -14,9 +13,9 @@ body {
     color: #e6e8ee;
     min-height: 100vh;
 }
-header {text-align: center; margin: 40px 0 30px;}
-header h1 {font-size: 48px; font-weight: 700; color: #9aa2ff;}
-header .subtitle {font-size: 22px; color: #7fd1ff; margin-top: 5px;}
+header {text-align: center; margin: 40px 0 30px; padding: 0 15px;}
+header h1 {font-size: 42px; font-weight: 700; color: #9aa2ff;}
+header .subtitle {font-size: 20px; color: #7fd1ff; margin-top: 5px;}
 
 .results-hero {display: flex; flex-direction: column; align-items: center; padding: 20px;}
 
@@ -37,10 +36,10 @@ header .subtitle {font-size: 22px; color: #7fd1ff; margin-top: 5px;}
     border: 1px solid rgba(127, 209, 255, 0.1);
 }
 
-.result-card h3 {font-size: 18px; color: #7fd1ff; margin-bottom: 5px; text-transform: uppercase;}
-.result-card h4 {font-size: 24px; color: #fff; margin-bottom: 20px; font-weight: 600;}
+.result-card h3 {font-size: 16px; color: #7fd1ff; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;}
+.result-card h4 {font-size: 22px; color: #fff; margin-bottom: 20px; font-weight: 600; line-height: 1.3;}
 .result-card .winner {
-    font-size: 28px; 
+    font-size: 26px; 
     color: #9aa2ff; 
     font-weight: 700; 
     padding: 10px 20px; 
@@ -48,13 +47,33 @@ header .subtitle {font-size: 22px; color: #7fd1ff; margin-top: 5px;}
     border-radius: 12px; 
     display: inline-block;
     background: rgba(154, 162, 255, 0.1);
+    word-break: break-word; /* Żeby długie ksywki nie psuły layoutu na tel */
 }
+
 .result-center {margin-top: 40px; display: flex; justify-content: center; width: 100%; max-width: 1200px;}
-.loading {font-size: 24px; color: #9aa2ff; animation: pulse 1.5s infinite;}
+.loading {font-size: 20px; color: #9aa2ff; animation: pulse 1.5s infinite; text-align: center;}
 @keyframes pulse { 0% {opacity: 1;} 50% {opacity: 0.5;} 100% {opacity: 1;} }
 
-@media (max-width:900px){.results-grid{grid-template-columns:repeat(2,1fr);}}
-@media (max-width:600px){.results-grid{grid-template-columns:1fr;}}
+/* --- MOBILE CSS --- */
+@media (max-width: 900px){
+    .results-grid{grid-template-columns:repeat(2,1fr);}
+}
+
+@media (max-width: 600px){
+    header h1 { font-size: 32px; }
+    
+    /* Na telefonie wyniki w 1 kolumnie - czytelniej */
+    .results-grid{
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .result-card { padding: 20px; }
+    .result-card h4 { font-size: 18px; }
+    .result-card .winner { font-size: 22px; }
+    
+    .result-center { margin-top: 20px; }
+}
 </style>
 </head>
 <body>
@@ -74,14 +93,14 @@ header .subtitle {font-size: 22px; color: #7fd1ff; margin-top: 5px;}
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
 <script>
-// --- TU TEŻ WKLEJ TE SAME DANE Z FIREBASE ---
+// --- TU WKLEJ SWOJE DANE FIREBASE ---
 const firebaseConfig = {
-  apiKey: "AIzaSyCkBQWV24EqwQKW2Ile9oi7qSvMWCj_LsU",
-  authDomain: "jezioro-glosowanie.firebaseapp.com",
-  projectId: "jezioro-glosowanie",
-  storageBucket: "jezioro-glosowanie.firebasestorage.app",
-  messagingSenderId: "278632210420",
-  appId: "1:278632210420:web:94e45a65a0ced81c90e3a1"
+  apiKey: "TU_WKLEJ_API_KEY",
+  authDomain: "TU_WKLEJ_PROJECT_ID.firebaseapp.com",
+  projectId: "TU_WKLEJ_PROJECT_ID",
+  storageBucket: "TU_WKLEJ_PROJECT_ID.appspot.com",
+  messagingSenderId: "TU_WKLEJ_SENDER_ID",
+  appId: "TU_WKLEJ_APP_ID"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -105,7 +124,6 @@ const categories = [
 
 async function loadResults(){
     try {
-        // Pobierz wszystkie dokumenty z kolekcji "glosy"
         const snapshot = await db.collection("glosy").get();
         
         if (snapshot.empty) {
@@ -113,18 +131,14 @@ async function loadResults(){
             return;
         }
 
-        // Struktura do zliczania: { 1: {"Gapa": 5, "Barix": 2}, 2: {...} }
         const aggregated = {};
         categories.forEach(c => aggregated[c.id] = {});
 
-        // Przetwarzanie głosów
         snapshot.forEach(doc => {
             const data = doc.data();
-            const votesArray = data.votes; // To jest tablica z głosami jednego użytkownika
-            
+            const votesArray = data.votes;
             if(votesArray && Array.isArray(votesArray)){
                 votesArray.forEach(vote => {
-                    // vote wygląda tak: { roundId: 1, choice: "Gapa", ... }
                     if(aggregated[vote.roundId]){
                         const currentCount = aggregated[vote.roundId][vote.choice] || 0;
                         aggregated[vote.roundId][vote.choice] = currentCount + 1;
@@ -133,23 +147,18 @@ async function loadResults(){
             }
         });
 
-        // Ukryj loading
         document.getElementById('loading-msg').style.display = 'none';
 
         const gridContainer = document.getElementById('results-grid');
         const centerContainer = document.getElementById('result-center');
 
-        // Funkcja pomocnicza: znajdź zwycięzcę
         function getWinner(roundId) {
             const counts = aggregated[roundId];
             const candidates = Object.keys(counts);
             if(candidates.length === 0) return "Brak głosów";
-            
-            // Redukcja do znalezienia klucza z największą wartością
             return candidates.reduce((a, b) => counts[a] >= counts[b] ? a : b);
         }
 
-        // Renderowanie kart 1-12
         for(let i=0; i<12; i++){
             const cat = categories[i];
             const winner = getWinner(cat.id);
@@ -166,7 +175,6 @@ async function loadResults(){
             gridContainer.appendChild(card);
         }
 
-        // Renderowanie karty 13
         const cat13 = categories[12];
         const winner13 = getWinner(cat13.id);
         const count13 = aggregated[cat13.id][winner13] || 0;
@@ -192,4 +200,3 @@ loadResults();
 </script>
 </body>
 </html>
-
