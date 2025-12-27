@@ -6,21 +6,19 @@
 <title>Hall Of Fame - Głosowanie</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-/* --- STYLE OGÓLNE --- */
+/* --- STYLE IDENTYCZNE JAK WCZEŚNIEJ --- */
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Montserrat',sans-serif;background:radial-gradient(circle at top,#1b1f2b,#0b0e14);color:#e6e8ee;min-height:100vh;}
-
 header{text-align:center;margin:30px 0 20px;}
 header h1{font-size:36px;font-weight:700;color:#9aa2ff;}
 header .subtitle{font-size:18px;color:#7fd1ff;margin-top:5px;}
 
-/* ZMIANA: Centrowanie karty w pionie i poziomie */
 .hero {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center; /* Centrowanie pionowe */
-    min-height: 80vh; /* Minimalna wysokość, żeby content był na środku ekranu */
+    justify-content: center;
+    min-height: 80vh;
     padding: 20px;
 }
 
@@ -41,7 +39,6 @@ header .subtitle{font-size:18px;color:#7fd1ff;margin-top:5px;}
 .photo{background:#0d0f17;padding:10px;border-radius:15px;text-align:center;}
 .photo img{width:100%;height:150px;object-fit:cover;border-radius:12px;margin-bottom:5px;}
 
-/* --- PRZYCISK WYBIERZ --- */
 .photo button{
     margin-top:5px;
     padding:8px 15px;
@@ -55,7 +52,6 @@ header .subtitle{font-size:18px;color:#7fd1ff;margin-top:5px;}
     font-size: 14px;
 }
 
-/* --- EFEKT PODŚWIETLENIA --- */
 .photo button.selected{
     background: #9aa2ff;
     color: #fff;
@@ -109,47 +105,61 @@ header .subtitle{font-size:18px;color:#7fd1ff;margin-top:5px;}
 </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
 <script>
-// --- KONFIGURACJA ---
+// --- TU MUSISZ WKLEIĆ SWOJE DANE Z FIREBASE (instrukcja niżej) ---
+const firebaseConfig = {
+  apiKey: "TU_WKLEJ_API_KEY",
+  authDomain: "TU_WKLEJ_PROJECT_ID.firebaseapp.com",
+  projectId: "TU_WKLEJ_PROJECT_ID",
+  storageBucket: "TU_WKLEJ_PROJECT_ID.appspot.com",
+  messagingSenderId: "TU_WKLEJ_SENDER_ID",
+  appId: "TU_WKLEJ_APP_ID"
+};
+
+// Inicjalizacja Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// --- LOGIKA GŁOSOWANIA ---
 const maxRounds = 13;
 let currentRound = 1;
+let collectedVotes = []; // Tablica tymczasowa
 
 const categories = [
-    {title:"Kategoria I",subtitle:"Największy Brutal"},
-    {title:"Kategoria II",subtitle:"Cichy Brutal"},
-    {title:"Kategoria III",subtitle:"Największy Simp"},
-    {title:"Kategoria IV",subtitle:"Największy Najebus"},
-    {title:"Kategoria V",subtitle:"Największy Ćpun"},
-    {title:"Kategoria VI",subtitle:"Największy Troll"},
-    {title:"Kategoria VII",subtitle:"Największy Tyracz"},
-    {title:"Kategoria VIII",subtitle:"Największa Pizda"},
-    {title:"Kategoria IX",subtitle:"Największy Rajzownik"},
-    {title:"Kategoria X",subtitle:"Największy Wyjebus"},
-    {title:"Kategoria XI",subtitle:"Kto Najwięcej Wychodził"},
-    {title:"Kategoria XII",subtitle:"Największy Żul"},
-    {title:"Kategoria XIII",subtitle:"Największy Żyd"}
+    {id: 1, title:"Kategoria I",subtitle:"Największy Brutal"},
+    {id: 2, title:"Kategoria II",subtitle:"Cichy Brutal"},
+    {id: 3, title:"Kategoria III",subtitle:"Największy Simp"},
+    {id: 4, title:"Kategoria IV",subtitle:"Największy Najebus"},
+    {id: 5, title:"Kategoria V",subtitle:"Największy Ćpun"},
+    {id: 6, title:"Kategoria VI",subtitle:"Największy Troll"},
+    {id: 7, title:"Kategoria VII",subtitle:"Największy Tyracz"},
+    {id: 8, title:"Kategoria VIII",subtitle:"Największa Pizda"},
+    {id: 9, title:"Kategoria IX",subtitle:"Największy Rajzownik"},
+    {id: 10, title:"Kategoria X",subtitle:"Największy Wyjebus"},
+    {id: 11, title:"Kategoria XI",subtitle:"Kto Najwięcej Wychodził"},
+    {id: 12, title:"Kategoria XII",subtitle:"Największy Żul"},
+    {id: 13, title:"Kategoria XIII",subtitle:"Największy Żyd"}
 ];
 
 function toggleSelect(button){
     const photo = button.parentElement;
-    
-    // Jeśli już zaznaczony -> odznacz
     if(photo.classList.contains('selected')){
         photo.classList.remove('selected');
         button.innerText="Wybierz";
     } else {
-        // Odznacz inne
         document.querySelectorAll('.photo').forEach(p=>{
             p.classList.remove('selected');
             p.querySelector('button').innerText="Wybierz";
         });
-        // Zaznacz ten
         photo.classList.add('selected');
         button.innerText="Wybrano";
     }
 }
 
-function nextRound(){
+async function nextRound(){
     const photos = document.querySelectorAll('.photo');
     const selected = Array.from(photos).find(p=>p.classList.contains('selected'));
     
@@ -160,30 +170,43 @@ function nextRound(){
 
     const winnerName = selected.querySelector('p').innerText;
 
-    // --- ZAPIS LOCAL STORAGE ---
-    let allVotes = JSON.parse(localStorage.getItem('jezioro_votes')) || [];
-    allVotes.push({
-        roundIndex: currentRound, 
+    // Dodaj głos do tymczasowej tablicy
+    collectedVotes.push({
+        roundId: categories[currentRound-1].id,
         categoryTitle: categories[currentRound-1].subtitle,
         choice: winnerName
     });
-    localStorage.setItem('jezioro_votes', JSON.stringify(allVotes));
-    // ---------------------------
 
+    // Jeśli to ostatnia runda -> Wyślij do bazy
     if(currentRound >= maxRounds){
-        // Ukryj nagłówek
-        document.getElementById('main-header').style.display = 'none';
+        // Pokaż loader lub zmień tekst
+        const btn = document.getElementById('next-round-btn');
+        btn.innerText = "Wysyłanie...";
+        btn.disabled = true;
 
-        // Pokaż ekran końcowy (BEZ PRZYCISKU)
-        document.querySelector('.card').innerHTML = `
-            <div style="padding: 60px 20px;">
-                <h1 style="font-size:48px; font-weight:700; color:#9aa2ff; margin-bottom: 30px;">Hall Of Fame: Jezioro</h1>
-                <p style="font-size:24px; color:#7fd1ff;">Dziękujemy za głosowanie, wyniki już wkrótce!</p>
-            </div>
-        `;
+        try {
+            // Wysyłamy cały obiekt głosowania
+            await db.collection("glosy").add({
+                votes: collectedVotes,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // Sukces - pokaż ekran końcowy
+            document.getElementById('main-header').style.display = 'none';
+            document.querySelector('.card').innerHTML = `
+                <div style="padding: 60px 20px;">
+                    <h1 style="font-size:48px; font-weight:700; color:#9aa2ff; margin-bottom: 30px;">Hall Of Fame: Jezioro</h1>
+                    <p style="font-size:24px; color:#7fd1ff;">Dziękujemy za głosowanie, wyniki już wkrótce!</p>
+                </div>
+            `;
+        } catch (error) {
+            console.error("Błąd zapisu: ", error);
+            alert("Wystąpił błąd przy wysyłaniu głosów. Sprawdź konsolę.");
+        }
         return;
     }
 
+    // Kolejna runda
     currentRound++;
     document.getElementById('category-number').innerText = categories[currentRound-1].title;
     document.getElementById('category-title').innerText = categories[currentRound-1].subtitle;
