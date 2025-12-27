@@ -6,6 +6,7 @@
 <title>Hall Of Fame - Wyniki</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
+/* Style te same co w index.html */
 * {margin:0; padding:0; box-sizing:border-box;}
 body {
     font-family: 'Montserrat', sans-serif;
@@ -13,18 +14,44 @@ body {
     color: #e6e8ee;
     min-height: 100vh;
 }
-header {text-align: center; margin: 30px 0 20px;}
-header h1 {font-size: 36px; font-weight: 700; color: #9aa2ff;}
-header .subtitle {font-size: 18px; color: #7fd1ff; margin-top: 5px;}
+header {text-align: center; margin: 40px 0 30px;}
+header h1 {font-size: 48px; font-weight: 700; color: #9aa2ff;}
+header .subtitle {font-size: 22px; color: #7fd1ff; margin-top: 5px;}
+
 .results-hero {display: flex; flex-direction: column; align-items: center; padding: 20px;}
-.results-grid {display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 1000px;}
-.result-card {background: rgba(21,25,35,0.95); padding: 20px; border-radius: 18px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.4); transition: transform 0.2s ease, box-shadow 0.2s ease;}
-.result-card:hover {transform: translateY(-3px); box-shadow: 0 15px 35px rgba(0,0,0,0.6);}
-.result-card h3 {font-size: 16px; color: #7fd1ff; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;}
-.result-card h4 {font-size: 20px; color: #fff; margin-bottom: 15px; font-weight: 600;}
-.result-card .winner {font-size: 24px; color: #9aa2ff; font-weight: 700; padding: 10px; border: 1px dashed #9aa2ff; border-radius: 10px; display: inline-block;}
-.result-center {margin-top: 40px; display: flex; justify-content: center; width: 100%; max-width: 1000px;}
-.reset-btn {margin-top: 50px; background: transparent; border: 1px solid #ff4d4d; color: #ff4d4d; padding: 10px 20px; border-radius: 8px; cursor: pointer;}
+
+.results-grid {
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 30px; 
+    width: 100%; 
+    max-width: 1200px;
+}
+
+.result-card {
+    background: rgba(21,25,35,0.95); 
+    padding: 30px; 
+    border-radius: 20px; 
+    text-align: center; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4); 
+    border: 1px solid rgba(127, 209, 255, 0.1);
+}
+
+.result-card h3 {font-size: 18px; color: #7fd1ff; margin-bottom: 5px; text-transform: uppercase;}
+.result-card h4 {font-size: 24px; color: #fff; margin-bottom: 20px; font-weight: 600;}
+.result-card .winner {
+    font-size: 28px; 
+    color: #9aa2ff; 
+    font-weight: 700; 
+    padding: 10px 20px; 
+    border: 2px dashed #9aa2ff; 
+    border-radius: 12px; 
+    display: inline-block;
+    background: rgba(154, 162, 255, 0.1);
+}
+.result-center {margin-top: 40px; display: flex; justify-content: center; width: 100%; max-width: 1200px;}
+.loading {font-size: 24px; color: #9aa2ff; animation: pulse 1.5s infinite;}
+@keyframes pulse { 0% {opacity: 1;} 50% {opacity: 0.5;} 100% {opacity: 1;} }
 
 @media (max-width:900px){.results-grid{grid-template-columns:repeat(2,1fr);}}
 @media (max-width:600px){.results-grid{grid-template-columns:1fr;}}
@@ -34,18 +61,32 @@ header .subtitle {font-size: 18px; color: #7fd1ff; margin-top: 5px;}
 
 <header>
     <h1>Hall Of Fame: Jezioro</h1>
-    <p class="subtitle">Wyniki głosowania (TOP 1)</p>
+    <p class="subtitle">Oficjalne Wyniki (TOP 1)</p>
 </header>
 
 <main class="results-hero">
+    <div id="loading-msg" class="loading">Pobieranie głosów z bazy...</div>
     <div class="results-grid" id="results-grid"></div>
     <div class="result-center" id="result-center"></div>
-    
-    <button class="reset-btn" onclick="resetGlosow()">Resetuj Głosy</button>
 </main>
 
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
 <script>
-// Lista kategorii z opisami
+// --- TU TEŻ WKLEJ TE SAME DANE Z FIREBASE ---
+const firebaseConfig = {
+  apiKey: "TU_WKLEJ_API_KEY",
+  authDomain: "TU_WKLEJ_PROJECT_ID.firebaseapp.com",
+  projectId: "TU_WKLEJ_PROJECT_ID",
+  storageBucket: "TU_WKLEJ_PROJECT_ID.appspot.com",
+  messagingSenderId: "TU_WKLEJ_SENDER_ID",
+  appId: "TU_WKLEJ_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
 const categories = [
     {id: 1, title: "Kategoria I", sub: "Największy Brutal"},
     {id: 2, title: "Kategoria II", sub: "Cichy Brutal"},
@@ -62,69 +103,91 @@ const categories = [
     {id: 13, title: "Kategoria XIII", sub: "Największy Żyd"}
 ];
 
-function loadResults(){
-    // Pobierz głosy z LocalStorage
-    const allVotes = JSON.parse(localStorage.getItem('jezioro_votes')) || [];
-    
-    const gridContainer = document.getElementById('results-grid');
-    const centerContainer = document.getElementById('result-center');
-
-    // Funkcja licząca zwycięzcę dla danego ID kategorii
-    function getWinner(roundId) {
-        // Filtrujemy głosy tylko dla tej rundy
-        const votesInRound = allVotes.filter(v => v.roundIndex === roundId);
+async function loadResults(){
+    try {
+        // Pobierz wszystkie dokumenty z kolekcji "glosy"
+        const snapshot = await db.collection("glosy").get();
         
-        if(votesInRound.length === 0) return "Brak głosów";
+        if (snapshot.empty) {
+            document.getElementById('loading-msg').innerText = "Brak oddanych głosów w bazie.";
+            return;
+        }
 
-        // Zliczamy wystąpienia
-        const counts = {};
-        votesInRound.forEach(v => {
-            counts[v.choice] = (counts[v.choice] || 0) + 1;
+        // Struktura do zliczania: { 1: {"Gapa": 5, "Barix": 2}, 2: {...} }
+        const aggregated = {};
+        categories.forEach(c => aggregated[c.id] = {});
+
+        // Przetwarzanie głosów
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const votesArray = data.votes; // To jest tablica z głosami jednego użytkownika
+            
+            if(votesArray && Array.isArray(votesArray)){
+                votesArray.forEach(vote => {
+                    // vote wygląda tak: { roundId: 1, choice: "Gapa", ... }
+                    if(aggregated[vote.roundId]){
+                        const currentCount = aggregated[vote.roundId][vote.choice] || 0;
+                        aggregated[vote.roundId][vote.choice] = currentCount + 1;
+                    }
+                });
+            }
         });
 
-        // Znajdujemy max
-        return Object.keys(counts).reduce((a, b) => counts[a] >= counts[b] ? a : b);
-    }
+        // Ukryj loading
+        document.getElementById('loading-msg').style.display = 'none';
 
-    // Generowanie kart dla kategorii 1-12
-    for(let i=0; i<12; i++){
-        const cat = categories[i];
-        const winner = getWinner(cat.id);
-        
-        const card = document.createElement('div');
-        card.className = "result-card";
-        card.innerHTML = `
-            <h3>${cat.title}</h3>
-            <h4>${cat.sub}</h4>
-            <div class="winner">${winner}</div>
+        const gridContainer = document.getElementById('results-grid');
+        const centerContainer = document.getElementById('result-center');
+
+        // Funkcja pomocnicza: znajdź zwycięzcę
+        function getWinner(roundId) {
+            const counts = aggregated[roundId];
+            const candidates = Object.keys(counts);
+            if(candidates.length === 0) return "Brak głosów";
+            
+            // Redukcja do znalezienia klucza z największą wartością
+            return candidates.reduce((a, b) => counts[a] >= counts[b] ? a : b);
+        }
+
+        // Renderowanie kart 1-12
+        for(let i=0; i<12; i++){
+            const cat = categories[i];
+            const winner = getWinner(cat.id);
+            const count = aggregated[cat.id][winner] || 0;
+
+            const card = document.createElement('div');
+            card.className = "result-card";
+            card.innerHTML = `
+                <h3>${cat.title}</h3>
+                <h4>${cat.sub}</h4>
+                <div class="winner">${winner}</div>
+                <div style="margin-top:10px; color:#666; font-size:12px;">Głosów: ${count}</div>
+            `;
+            gridContainer.appendChild(card);
+        }
+
+        // Renderowanie karty 13
+        const cat13 = categories[12];
+        const winner13 = getWinner(cat13.id);
+        const count13 = aggregated[cat13.id][winner13] || 0;
+
+        const card13 = document.createElement('div');
+        card13.className = "result-card";
+        card13.style.width = "100%";
+        card13.innerHTML = `
+            <h3>${cat13.title}</h3>
+            <h4>${cat13.sub}</h4>
+            <div class="winner">${winner13}</div>
+            <div style="margin-top:10px; color:#666; font-size:12px;">Głosów: ${count13}</div>
         `;
-        gridContainer.appendChild(card);
-    }
+        centerContainer.appendChild(card13);
 
-    // Generowanie karty dla kategorii 13 (Center)
-    const cat13 = categories[12];
-    const winner13 = getWinner(cat13.id);
-    
-    const card13 = document.createElement('div');
-    card13.className = "result-card";
-    // Dodatkowe style dla ostatniej karty żeby była wyróżniona
-    card13.style.width = "100%"; 
-    card13.innerHTML = `
-        <h3>${cat13.title}</h3>
-        <h4>${cat13.sub}</h4>
-        <div class="winner">${winner13}</div>
-    `;
-    centerContainer.appendChild(card13);
-}
-
-function resetGlosow() {
-    if(confirm("Czy na pewno chcesz usunąć wszystkie głosy?")) {
-        localStorage.removeItem('jezioro_votes');
-        location.reload();
+    } catch (error) {
+        console.error("Błąd pobierania: ", error);
+        document.getElementById('loading-msg').innerText = "Błąd pobierania danych. Sprawdź konsolę.";
     }
 }
 
-// Uruchom
 loadResults();
 </script>
 </body>
