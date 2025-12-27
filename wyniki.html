@@ -1,103 +1,70 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hall Of Fame - Wyniki</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-* {margin:0; padding:0; box-sizing:border-box;}
-body {
-    font-family: 'Montserrat', sans-serif;
-    background: radial-gradient(circle at top, #1b1f2b, #0b0e14);
-    color: #e6e8ee;
-    min-height: 100vh;
-}
-header {text-align: center; margin: 30px 0 20px;}
-header h1 {font-size: 36px; font-weight: 700; color: #9aa2ff;}
-header .subtitle {font-size: 18px; color: #7fd1ff; margin-top: 5px;}
-.results-hero {display: flex; flex-direction: column; align-items: center; padding: 20px;}
-.results-grid {display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 1000px;}
-.result-card {background: rgba(21,25,35,0.95); padding: 20px; border-radius: 18px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.4); transition: transform 0.2s ease, box-shadow 0.2s ease;}
-.result-card:hover {transform: translateY(-3px); box-shadow: 0 15px 35px rgba(0,0,0,0.6);}
-.result-card h3 {font-size: 20px; color: #7fd1ff; margin-bottom: 10px;}
-.result-card .winner {font-size: 24px; color: #9aa2ff; font-weight: 700;}
-.result-center {margin-top: 40px; display: flex; justify-content: center;}
-@media (max-width:900px){.results-grid{grid-template-columns:repeat(2,1fr);}}
-@media (max-width:600px){.results-grid{grid-template-columns:1fr;}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plebiscyt - Wyniki TOP 1</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .result-card { background: #f4f4f4; padding: 20px; margin-top: 20px; border-left: 5px solid #007bff; }
+        .winner-name { font-size: 1.5em; color: #007bff; font-weight: bold; }
+        .vote-count { color: #666; }
+    </style>
 </head>
 <body>
 
-<header>
-    <h1>Hall Of Fame: Jezioro</h1>
-    <p class="subtitle">Wyniki głosowania</p>
-</header>
+    <h1>Wyniki Plebiscytu (Top 1)</h1>
+    <div id="results-container">Ładowanie wyników...</div>
 
-<main class="results-hero">
-    <div class="results-grid" id="results-grid"></div>
-    <div class="result-center" id="result-center"></div>
-</main>
+    <br>
+    <a href="index.html">Wróć do głosowania</a>
+    <button onclick="clearVotes()" style="margin-left: 20px; color: red;">Resetuj moje głosy</button>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script>
+        function renderResults() {
+            const votes = JSON.parse(localStorage.getItem('plebiscyt_data')) || [];
+            const container = document.getElementById('results-container');
 
-<script>
-// Twoja konfiguracja Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyDJ8lqWAKEs1mPA8dkMKRIm1EwyaidxaJI",
-  authDomain: "jezioro-43602.firebaseapp.com",
-  projectId: "jezioro-43602",
-  storageBucket: "jezioro-43602.firebasestorage.app",
-  messagingSenderId: "137604753416",
-  appId: "1:137604753416:web:0f81eb2ed7e4df6c3409bd"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+            if (votes.length === 0) {
+                container.innerHTML = "<p>Brak oddanych głosów. Musisz najpierw zagłosować!</p>";
+                return;
+            }
 
-const categories = [
-    "Kategoria I","Kategoria II","Kategoria III","Kategoria IV","Kategoria V",
-    "Kategoria VI","Kategoria VII","Kategoria VIII","Kategoria IX","Kategoria X",
-    "Kategoria XI","Kategoria XII","Kategoria XIII"
-];
+            // 1. Grupuj głosy: { "Kategoria": { "Osoba": liczba_glosow } }
+            const stats = {};
+            votes.forEach(v => {
+                if (!stats[v.category]) stats[v.category] = {};
+                stats[v.category][v.name] = (stats[v.category][v.name] || 0) + 1;
+            });
 
-async function loadResults(){
-    // Kategoria 1-12 w gridzie
-    for(let i=0;i<12;i++){
-        const docSnap = await db.collection('votes').doc('category'+(i+1)).get();
-        let winner = "Brak głosu";
-        if(docSnap.exists){
-            const votes = docSnap.data().votes || [];
-            if(votes.length>0){
-                const counts = {};
-                votes.forEach(v=>counts[v]=(counts[v]||0)+1);
-                winner = Object.keys(counts).reduce((a,b)=>counts[a]>=counts[b]?a:b);
+            // 2. Wygeneruj HTML dla Top 1
+            let finalHtml = "";
+            for (const cat in stats) {
+                const nominees = stats[cat];
+                // Znajdź zwycięzcę kategorii
+                const winner = Object.keys(nominees).reduce((a, b) => nominees[a] > nominees[b] ? a : b);
+                
+                finalHtml += `
+                    <div class="result-card">
+                        <h3>Kategoria: ${cat}</h3>
+                        <p>Obecny lider:</p>
+                        <div class="winner-name">${winner}</div>
+                        <div class="vote-count">Liczba głosów: ${nominees[winner]}</div>
+                    </div>
+                `;
+            }
+            container.innerHTML = finalHtml;
+        }
+
+        function clearVotes() {
+            if(confirm("Czy na pewno chcesz usunąć swoje głosy?")) {
+                localStorage.removeItem('plebiscyt_data');
+                location.reload();
             }
         }
-        const card = document.createElement('div');
-        card.className="result-card";
-        card.innerHTML=`<h3>${categories[i]}</h3><p class="winner">${winner}</p>`;
-        document.getElementById('results-grid').appendChild(card);
-    }
 
-    // 13-ta kategoria na środku
-    const docSnap13 = await db.collection('votes').doc('category13').get();
-    let winner13 = "Brak głosu";
-    if(docSnap13.exists){
-        const votes = docSnap13.data().votes || [];
-        if(votes.length>0){
-            const counts = {};
-            votes.forEach(v=>counts[v]=(counts[v]||0)+1);
-            winner13 = Object.keys(counts).reduce((a,b)=>counts[a]>=counts[b]?a:b);
-        }
-    }
-    const card13 = document.createElement('div');
-    card13.className="result-card";
-    card13.innerHTML=`<h3>${categories[12]}</h3><p class="winner">${winner13}</p>`;
-    document.getElementById('result-center').appendChild(card13);
-}
-
-loadResults();
-</script>
+        // Uruchom przy starcie
+        renderResults();
+    </script>
 </body>
 </html>
